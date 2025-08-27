@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Gantt Chart Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/2.9.5/dom-to-image-more.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container mx-auto p-4 md:p-8">
+        <div class="app-header mb-8 flex justify-between items-center">
+             <div class="flex items-center gap-4">
+                 <div>
+                     <img src="https://i.postimg.cc/YStWH6PQ/Logo-LT.jpg" alt="Labtech Engineering Logo" class="h-16 w-auto rounded-md">
+                     <p class="text-xs text-gray-300 mt-1">app designed by : Paul Ryndel</p>
+                 </div>
+                 <div>
+                     <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.3);">Import Part Reports</h1>
+                     <p class="text-lg text-yellow-200" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">Procurement Department</p>
+                 </div>
+             </div>
+             <div class="text-right">
+                 <div id="current-date" class="font-semibold text-lg"></div>
+                 <div id="current-time" class="font-mono text-2xl"></div>
+             </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 md:p-8 mb-8">
+            <div class="flex flex-wrap justify-between items-end gap-6">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-700 mb-2">1. Upload File</h3>
+                    <label for="file-upload" class="relative cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 w-full sm:w-auto text-center">
+                        Upload Excel File
+                    </label>
+                    <input id="file-upload" type="file" class="hidden" accept=".xlsx, .xls">
+                    <span id="file-name" class="text-gray-500 italic block mt-2">No file selected</span>
+                </div>
+            </div>
+            <div class="border-t pt-4 mt-4 w-full">
+                <h3 class="text-lg font-medium text-gray-700 w-full col-span-full mb-2">2. Universal Controls</h3>
+                <div class="flex flex-col md:flex-row flex-wrap items-end gap-4">
+                    <div class="p-2 border border-gray-300 rounded-lg">
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Filter by Status</h4>
+                        <div id="status-filters" class="flex flex-wrap gap-2">
+                            <button data-status="all" class="status-filter-btn">All</button>
+                            <button data-status="on-time" class="status-filter-btn">On Time</button>
+                            <button data-status="delay" class="status-filter-btn active-filter">Delay</button>
+                            <button data-status="waiting" class="status-filter-btn">Waiting</button>
+                        </div>
+                    </div>
+                    <div class="p-2 border border-gray-300 rounded-lg">
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Sort by</h4>
+                         <select id="sort-options" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                             <option value="name">Customer Name</option>
+                             <option value="max-delay">Max Delay</option>
+                         </select>
+                    </div>
+                    <div class="p-2 border border-gray-300 rounded-lg">
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Filter by Date</h4>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <input type="date" id="start-date-filter" class="border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <input type="date" id="end-date-filter" class="border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <button id="filter-button" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg transition-colors">Apply</button>
+                            <button id="clear-filter-button" class="text-gray-600 hover:text-gray-900 font-medium py-2 px-4">Clear</button>
+                        </div>
+                    </div>
+                     <div class="p-2 border border-gray-300 rounded-lg">
+                         <h4 class="text-sm font-medium text-gray-700 mb-2">Search Customer</h4>
+                          <input type="text" id="customer-search" placeholder="Enter customer name..." class="border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                     </div>
+                      <div class="p-2 border border-gray-300 rounded-lg">
+                         <h4 class="text-sm font-medium text-gray-700 mb-2">Filter by Customer</h4>
+                         <select id="customer-filter-gantt" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                          </select>
+                     </div>
+                      <div class="p-2 border border-gray-300 rounded-lg">
+                         <h4 class="text-sm font-medium text-gray-700 mb-2">Filter by Progress</h4>
+                         <select id="progress-filter-gantt" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                          </select>
+                     </div>
+                      <div class="p-2 border border-gray-300 rounded-lg">
+                         <h4 class="text-sm font-medium text-gray-700 mb-2">Search by S/N</h4>
+                         <input type="text" id="search-sn" placeholder="Enter S/N..." class="border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                     </div>
+                      <div class="p-2 border border-gray-300 rounded-lg">
+                         <h4 class="text-sm font-medium text-gray-700 mb-2">Search by PR Draft</h4>
+                         <input type="text" id="search-pr-draft" placeholder="Enter PR Draft..." class="border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loader" class="hidden text-center my-10">
+            <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <p class="mt-2 text-gray-600">Processing your file...</p>
+        </div>
+
+        <div id="message-area" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative my-4" role="alert">
+            <strong class="font-bold">Error:</strong> <span id="message-text" class="block sm:inline"></span>
+        </div>
+
+        <div id="truncation-warning" class="hidden text-center my-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-lg"></div>
+
+        <div id="tabs-container" class="hidden border-b border-gray-200 mb-4">
+            <button id="gantt-tab-button" class="tab-button active">Gantt Chart</button>
+            <button id="gantt-detail-tab-button" class="tab-button">Gantt Chart (Part details)</button>
+            <button id="monthly-forecast-tab-button" class="tab-button">Monthly M/C Forecast</button>
+            <button id="table-tab-button" class="tab-button">Progress Table</button>
+            <button id="alarm-tab-button" class="tab-button">Arrival Alarm</button>
+            <button id="kpi-tab-button" class="tab-button">KPI & Delay Report</button>
+            <button id="forecast-tab-button" class="tab-button">Forecast</button>
+            <button id="completion-tab-button" class="tab-button">Completion</button>
+        </div>
+
+        <div id="gantt-tab-content" class="tab-content active">
+            <div id="customer-chart-container" class="hidden bg-white rounded-xl shadow-md p-4 md:p-6 min-h-[500px] mb-8 border border-gray-300">
+                <h2 class="view-title flex justify-between items-center">
+                    <span>Customer View</span>
+                    <button id="print-gantt-customer-btn" class="print-btn text-sm">Print Chart</button>
+                </h2>
+                <div id="gantt-chart"></div>
+                <div id="customer-view-legend" class="mt-6 flex justify-center flex-wrap gap-x-6 gap-y-2">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-green-500 rounded-sm mr-2"></div>
+                        <span>Planned (Sale Order to Deliver Date)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-red-500 rounded-sm mr-2"></div>
+                        <span>Delayed (Deliver Date to Latest ETA)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="part-detail-chart-container" class="hidden bg-white rounded-xl shadow-md p-4 md:p-6 min-h-[300px] mb-8 border border-gray-300">
+                <h2 id="part-detail-title" class="view-title flex justify-between items-center">
+                    <span id="part-detail-title-text">Part Details</span>
+                    <button id="print-gantt-part-btn" class="print-btn text-sm">Print Chart</button>
+                </h2>
+                <div id="part-detail-chart"></div>
+                 <div class="mt-6 flex justify-center flex-wrap gap-x-6 gap-y-2">
+                      <div class="flex items-center"><div class="w-4 h-4 mr-2" style="background-color: #22c55e;"></div><span>💲 OD &rarr; ETF</span></div>
+                      <div class="flex items-center"><div class="w-4 h-4 mr-2" style="background-color: #8b5cf6;"></div><span>📦 ETF &rarr; ETD</span></div>
+                      <div class="flex items-center"><div class="w-4 h-4 mr-2" style="background-color: #3b82f6;"></div><span>ETD &rarr; ETA (✈️ Air / 🚚 Land / 🚢 Sea)</span></div>
+                      <div class="flex items-center"><span>🏭 Arrived</span></div>
+                 </div>
+            </div>
+        </div>
+
+        <div id="gantt-detail-tab-content" class="tab-content">
+            <div id="gantt-detail-main-container" class="hidden bg-white rounded-xl shadow-md p-4 md:p-6 min-h-[300px] mb-8 border border-gray-300">
+                <div class="flex flex-wrap items-end gap-6 mb-4 bg-gray-50 p-4 rounded-lg">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Select Customer to View Report</h3>
+                        <select id="customer-filter-gantt-detail" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full md:w-64">
+                            <option value="">-- Select a Customer --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Search by S/N</h3>
+                        <input type="text" id="search-sn-detail" placeholder="Enter S/N..." class="border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Search by Progress</h3>
+                        <input type="text" id="search-progress-detail" placeholder="Enter progress status..." class="border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                    </div>
+                    <div class="self-end">
+                        <button id="print-gantt-detail-btn" class="print-btn" disabled>
+                            Print Chart
+                        </button>
+                    </div>
+                </div>
+                <h2 id="gantt-detail-title" class="view-title flex justify-between items-center">
+                    <span id="gantt-detail-title-text">Select a Customer to Generate Report</span>
+                    <span id="gantt-detail-title-stats" class="text-sm font-medium mr-4"></span>
+                </h2>
+                <div id="gantt-detail-chart"></div>
+                <div class="mt-6 flex justify-center flex-wrap gap-x-6 gap-y-2">
+                    <div class="flex items-center"><div class="w-4 h-4 mr-2" style="background-color: #22c55e;"></div><span>💲 OD &rarr; ETF</span></div>
+                    <div class="flex items-center"><div class="w-4 h-4 mr-2" style="background-color: #8b5cf6;"></div><span>📦 ETF &rarr; ETD</span></div>
+                    <div class="flex items-center"><div class="w-4 h-4 mr-2" style="background-color: #3b82f6;"></div><span>ETD &rarr; ETA (✈️ Air / 🚚 Land / 🚢 Sea)</span></div>
+                    <div class="flex items-center"><span>🏭 Arrived</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="monthly-forecast-tab-content" class="tab-content">
+            <div id="monthly-forecast-chart-container" class="hidden bg-white rounded-xl shadow-md p-4 md:p-6 min-h-[500px] mb-8 border border-gray-300">
+                 <div class="flex flex-wrap items-end gap-6 mb-4 bg-gray-50 p-4 rounded-lg">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Select Year</h3>
+                        <select id="forecast-chart-year-filter" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full md:w-40">
+                            <option value="">-- Year --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Select Month</h3>
+                        <select id="forecast-chart-month-filter" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full md:w-40">
+                             <option value="">-- Month --</option>
+                             <option value="1">January</option>
+                             <option value="2">February</option>
+                             <option value="3">March</option>
+                             <option value="4">April</option>
+                             <option value="5">May</option>
+                             <option value="6">June</option>
+                             <option value="7">July</option>
+                             <option value="8">August</option>
+                             <option value="9">September</option>
+                             <option value="10">October</option>
+                             <option value="11">November</option>
+                             <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="self-end">
+                         <button id="forecast-chart-apply-filter" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Generate Chart</button>
+                    </div>
+                    <div class="self-end">
+                        <button id="print-monthly-forecast-btn" class="print-btn" disabled>
+                            Print Chart
+                        </button>
+                    </div>
+                </div>
+                <h2 class="view-title flex justify-between items-center">
+                    <span id="monthly-forecast-title-text">Monthly M/C Forecast</span>
+                </h2>
+                <div id="monthly-forecast-chart-message" class="text-center text-gray-500 p-8">Please select a month and year to generate the report.</div>
+                <div id="monthly-forecast-chart"></div>
+                <div id="monthly-forecast-legend" class="hidden mt-6 flex justify-center flex-wrap gap-x-6 gap-y-2">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-green-500 rounded-sm mr-2"></div>
+                        <span>Completed (%)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-red-500 rounded-sm mr-2"></div>
+                        <span>Incomplete (%)</span>
+                    </div>
+                </div>
+                 <div id="mini-completion-table-container" class="hidden data-table-container bg-white rounded-xl shadow-md p-4 md:p-6 mt-8"></div>
+            </div>
+        </div>
+
+
+        <div id="table-tab-content" class="tab-content">
+             <div id="progress-table-controls" class="hidden flex flex-wrap items-end gap-6 mb-4 bg-white p-4 rounded-lg shadow-sm">
+                 <div>
+                     <h3 class="text-sm font-medium text-gray-700 mb-2">Filter by Customer</h3>
+                     <select id="customer-filter-progress" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                         </select>
+                 </div>
+                 <div>
+                     <h3 class="text-sm font-medium text-gray-700 mb-2">Filter by Progress</h3>
+                     <select id="progress-filter" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                         </select>
+                 </div>
+                 <div>
+                     <h3 class="text-sm font-medium text-gray-700 mb-2">Sort by</h3>
+                     <select id="progress-sort" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                         <option value="customer">Customer / Machine</option>
+                         <option value="partName">Part Name</option>
+                         <option value="progress">Progress Status</option>
+                     </select>
+                 </div>
+                 <div class="self-end">
+                    <button id="print-progress-btn" class="print-btn">Print Report</button>
+                 </div>
+             </div>
+             <div id="progress-table-container" class="data-table-container bg-white rounded-xl shadow-md p-4 md:p-6">
+                 <h2 class="view-title">Progress Status Table</h2>
+                 <table id="progress-table" class="data-table">
+                     <thead>
+                         <tr>
+                             <th>#</th>
+                             <th>Customer Name</th>
+                             <th>M/C Type and S/N</th>
+                             <th>Part Name</th>
+                             <th>Cancelled</th>
+                             <th>Completed</th>
+                             <th>N/A</th>
+                             <th>Shipped</th>
+                             <th>Use Local</th>
+                             <th>Use Stock</th>
+                             <th>Wait Approve</th>
+                             <th>Wait PO</th>
+                             <th>Wait POS</th>
+                             <th>Wait PR</th>
+                             <th>Wait QO</th>
+                             <th>WIP</th>
+                         </tr>
+                     </thead>
+                     <tbody id="progress-table-body">
+                         </tbody>
+                 </table>
+             </div>
+        </div>
+
+        <div id="alarm-tab-content" class="tab-content">
+            <div class="flex justify-end mb-4">
+                <button id="print-alarm-btn" class="print-btn">Print Full Alarm Report</button>
+            </div>
+            <div id="arrived-container" class="bg-white rounded-xl shadow-md p-4 md:p-6 min-h-[200px] mb-8 border border-green-300">
+                <h2 class="view-title" style="background-color: #dcfce7; color: #166534;">Arrived in Factory</h2>
+                <div id="arrived-chart"></div>
+            </div>
+            <div id="arriving-1-week-container" class="bg-white rounded-xl shadow-md p-4 md:p-6 min-h-[200px] mb-8 border border-yellow-300">
+                <h2 class="view-title" style="background-color: #fef9c3; color: #854d0e;">Arriving in 1 Week</h2>
+                <div id="arriving-1-week-chart"></div>
+            </div>
+            <div id="arriving-2-weeks-container" class="bg-white rounded-xl shadow-md p-4 md:p-6 min-h-[200px] mb-8 border border-orange-300">
+                <h2 class="view-title" style="background-color: #ffedd5; color: #9a3412;">Arriving in 2 Weeks</h2>
+                <div id="arriving-2-weeks-chart"></div>
+            </div>
+        </div>
+
+        <div id="kpi-tab-content" class="tab-content">
+            <div id="kpi-table-controls" class="hidden flex flex-wrap items-end gap-6 mb-4 bg-white p-4 rounded-lg shadow-sm">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Filter by Care Of</h3>
+                    <select id="kpi-filter-care-of" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                    </select>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Filter by Progress</h3>
+                    <select id="kpi-filter-progress" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                    </select>
+                </div>
+                <div class="self-end">
+                    <button id="print-kpi-btn" class="print-btn">Print Report</button>
+                 </div>
+            </div>
+            <div id="kpi-table-container" class="data-table-container bg-white rounded-xl shadow-md p-4 md:p-6">
+                <h2 class="view-title">KPI & Delay Report</h2>
+                <table id="kpi-table" class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Item #</th>
+                            <th>Customer Name</th>
+                            <th>Machine Type</th>
+                            <th>S/N</th>
+                            <th>Part Name</th>
+                            <th>BOM<br>Delay</th>
+                            <th>Customer<br>Delay</th>
+                            <th>Drawing<br>Delay</th>
+                            <th>Engr.<br>Delay</th>
+                            <th>Long Lead<br>Time</th>
+                            <th>Delay</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kpi-table-body">
+                         </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="forecast-tab-content" class="tab-content">
+             <div id="forecast-table-controls" class="hidden flex flex-wrap items-end gap-6 mb-4 bg-white p-4 rounded-lg shadow-sm">
+                 <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Filter by Forecast Month</h3>
+                    <select id="forecast-month-filter" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                    </select>
+                </div>
+                <div class="self-end">
+                    <button id="print-forecast-btn" class="print-btn">Print Report</button>
+                 </div>
+             </div>
+            <div id="forecast-table-container" class="data-table-container bg-white rounded-xl shadow-md p-4 md:p-6">
+                <h2 class="view-title">Forecast Report</h2>
+                <table id="forecast-table" class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Forecast</th>
+                            <th>Customer Name</th>
+                            <th>M/C Type</th>
+                            <th>S/N</th>
+                            <th>Part Name</th>
+                            <th>Progress</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="forecast-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="completion-tab-content" class="tab-content">
+             <div id="completion-table-controls" class="hidden flex flex-wrap items-end gap-6 mb-4 bg-white p-4 rounded-lg shadow-sm">
+                 <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Filter by Forecast Month</h3>
+                    <select id="completion-month-filter" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                    </select>
+                </div>
+                 <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Filter by Customer</h3>
+                     <select id="customer-filter-completion" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full" multiple size="4">
+                     </select>
+                     <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple.</p>
+                </div>
+                 <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Sort by</h3>
+                     <select id="completion-sort" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                         <option value="customer">Customer Name</option>
+                         <option value="completion_desc">Completed % (High to Low)</option>
+                         <option value="completion_asc">Completed % (Low to High)</option>
+                     </select>
+                </div>
+                 <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Filter by Completion %</h3>
+                    <select id="completion-percentage-filter" class="custom-select border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                        <option value="all">All Percentages</option>
+                        <option value="<50">&lt; 50% Completed</option>
+                        <option value=">=50">&gt;= 50% Completed</option>
+                        <option value="=100">100% Completed</option>
+                    </select>
+                </div>
+                <div class="self-end">
+                    <button id="print-completion-btn" class="print-btn">Print Report</button>
+                 </div>
+             </div>
+            <div id="completion-table-container" class="data-table-container bg-white rounded-xl shadow-md p-4 md:p-6">
+                <h2 class="view-title">Completion Report</h2>
+                <table id="completion-table" class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Item #</th>
+                            <th>Forecast</th>
+                            <th>Customer Name</th>
+                            <th>M/C Type</th>
+                            <th>S/N</th>
+                            <th>Completed (%)</th>
+                            <th>Incomplete (%)</th>
+                            <th>Part Name</th>
+                            <th>Progress</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="completion-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="javascript/worker" id="data-worker">
+        self.importScripts("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
+        
+        function parseExcelDate(val) {
+            if (val instanceof Date && !isNaN(val)) return val;
+            if (typeof val === 'number') return new Date(Date.UTC(0, 0, val - 1));
+            if (typeof val === 'string') {
+                const parsed = new Date(val);
+                if (!isNaN(parsed)) return parsed;
+            }
+            return null;
+        }
+
+        function getHeaders(headerRow) {
+            const headerMap = {};
+            const requiredHeaders = ['Customer Name', 'M/C Type', 'S/N', 'Sale Order No.', 'Deliver Date', 'Part Name', 'Progress', 'Solved ?', 'Cause of Delay', 'Care Of'];
+            const allHeaders = [...requiredHeaders, 'ETA', 'PO', 'OD', 'ETF', 'ETD', 'Ship', 'PR Draft', 'Forecast', 'Remarks'];
+            allHeaders.forEach(req => {
+                const found = headerRow.find(h => String(h).trim().toLowerCase() === req.toLowerCase());
+                if (found) headerMap[req] = found;
+            });
+            const missing = requiredHeaders.filter(req => !headerMap[req]);
+            if (missing.length > 0) {
+                throw new Error(`Missing required header(s): '${missing.join("', '")}'`);
+            }
+            return headerMap;
+        }
+
+        function processDataByCustomer(rawData, headerMap) {
+            const groupedBySN = new Map();
+            rawData.forEach(row => {
+                const snValue = row[headerMap['S/N']];
+                if (!snValue) return;
+                const sn = String(snValue).trim();
+                if (!groupedBySN.has(sn)) {
+                    groupedBySN.set(sn, {
+                        customer: row[headerMap['Customer Name']] || 'N/A',
+                        mcType: row[headerMap['M/C Type']] || 'N/A',
+                        sn: sn, 
+                        detailRows: [],
+                    });
+                }
+                groupedBySN.get(sn).detailRows.push(row);
+            });
+            const chartData = [];
+            let taskIdCounter = 0;
+            for (const [sn, group] of groupedBySN.entries()) {
+                const allStatuses = group.detailRows.map(p => {
+                    const solvedValue = p[headerMap['Solved ?']] ? String(p[headerMap['Solved ?']]).trim().toUpperCase() : '';
+                    if (solvedValue === 'YES') return 'on-time';
+                    if (solvedValue === 'NO') return 'delay';
+                    if (solvedValue === '??') return 'waiting';
+                    return 'unknown';
+                });
+                let finalStatus = 'unknown';
+                if (allStatuses.includes('delay')) finalStatus = 'delay';
+                else if (allStatuses.includes('waiting')) finalStatus = 'waiting';
+                else if (allStatuses.includes('on-time')) finalStatus = 'on-time';
+                const saleOrderDates = group.detailRows.map(p => parseExcelDate(p[headerMap['Sale Order No.']])).filter(Boolean);
+                const deliverDates = group.detailRows.map(p => parseExcelDate(p[headerMap['Deliver Date']])).filter(Boolean);
+                const etaDates = group.detailRows.map(p => parseExcelDate(p[headerMap['ETA']])).filter(Boolean);
+                const earliestSODate = saleOrderDates.length > 0 ? new Date(Math.min(...saleOrderDates)) : null;
+                const latestDeliverDate = deliverDates.length > 0 ? new Date(Math.max(...deliverDates)) : null;
+                const finalEta = finalStatus === 'delay' && etaDates.length > 0 ? new Date(Math.max(...etaDates)) : null;
+                const maxDelay = (finalStatus === 'delay' && latestDeliverDate && finalEta) ? (finalEta - latestDeliverDate) : 0;
+                const saleOrderNos = [...new Set(group.detailRows.map(p => String(p[headerMap['Sale Order No.']]).trim()).filter(Boolean))];
+                chartData.push({
+                    customer: group.customer, mcType: group.mcType, sn: group.sn,
+                    saleOrderDate: earliestSODate, deliverDate: latestDeliverDate, etaDate: finalEta,
+                    status: finalStatus, isDelayed: finalStatus === 'delay', maxDelay: maxDelay,
+                    saleOrderNos: saleOrderNos.join(', '), taskId: taskIdCounter++,
+                    detailRows: group.detailRows 
+                });
+            }
+            return chartData;
+        }
+        
+        self.onmessage = (e) => {
+            const { fileData } = e.data;
+            try {
+                const workbook = self.XLSX.read(new Uint8Array(fileData), { type: 'array' });
+                const sheetName = workbook.SheetNames.find(name => name.toLowerCase() === 'data');
+                if (!sheetName) throw new Error(`Sheet named 'Data' not found. Found sheets: ${workbook.SheetNames.join(', ')}`);
+                const worksheet = workbook.Sheets[sheetName];
+                const header = self.XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1, defval: "" })[0];
+                const jsonData = self.XLSX.utils.sheet_to_json(worksheet, { range: 1, defval: "", raw: true });
+                if (jsonData.length === 0) throw new Error("No data found in 'Data' sheet.");
+                const headerMap = getHeaders(header);
+                const customerData = processDataByCustomer(jsonData, headerMap);
+                self.postMessage({ customerData, rawData: jsonData, headerMap });
+            } catch (error) {
+                self.postMessage({ error: error.message });
+            }
+        };
+    </script>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #fefce8; /* Nice yellow background */
+}
+.tooltip {
+    position: absolute;
+    text-align: left;
+    padding: 8px;
+    font: 12px sans-serif;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    border-radius: 8px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 10;
+}
+#gantt-chart, #part-detail-chart, #gantt-detail-chart, #monthly-forecast-chart {
+    min-height: 300px;
+}
+.bar-group {
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.07));
+}
+.main-chart-bar {
+    cursor: pointer;
+}
+.x-axis-grid .tick line, .y-axis-grid line {
+    stroke: #e5e7eb;
+}
+.x-axis .domain, .y-axis .domain, .week-axis .domain {
+    stroke: none;
+}
+.status-filter-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s;
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+}
+.status-filter-btn:hover {
+    background-color: #e5e7eb;
+}
+.status-filter-btn.active-filter {
+    background-color: #1f2937;
+    color: white;
+    border-color: #1f2937;
+}
+.y-axis-label {
+    font-size: 11px;
+    line-height: 1.4;
+    color: #374151;
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+}
+.y-axis-row {
+    height: 100%;
+    box-sizing: border-box; /* Ensures padding/border are included in height */
+    border-bottom: 1px solid #e5e7eb; /* Light gray horizontal line */
+}
+.y-axis-label div {
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    border-right: 1px solid #e5e7eb;
+    white-space: normal;
+    word-break: break-word;
+}
+.y-axis-label .row-number { width: 100%; font-weight: 600; justify-content: center; }
+.y-axis-label .customer-name {
+    font-weight: 600;
+    color: #111827;
+    width: 35%; /* Adjusted width */
+    font-size: 10px;
+}
+.y-axis-label .mc-type {
+    width: 25%; /* Adjusted width */
+}
+.y-axis-label .sn { width: 30%; border-right: none; } /* Adjusted width */
+
+/* Styles for Part Detail Chart Y-Axis Labels */
+.y-axis-label .part-name-detail {
+    width: 100%;
+    font-weight: 600;
+}
+.y-axis-label .progress-detail {
+    width: 100%;
+}
+
+/* Styles for the new Full Gantt Detail Chart Y-Axis Labels */
+.y-axis-label .part-name-full-detail {
+    width: 100%;
+    font-weight: 600;
+}
+.machine-info-merged-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start !important;
+    padding: 8px;
+    font-size: 11px;
+    background-color: #f9fafb; /* Subtle background for merged cells */
+    border-right: 1px solid #e5e7eb;
+}
+.y-axis-label .progress-full-detail {
+    width: 100%;
+}
+
+
+.axis-header { font-size: 12px; font-weight: 600; fill: #4b5563; }
+.custom-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+.date-header-tick rect, .week-header-tick rect {
+    fill: transparent;
+    stroke: #9ca3af; /* Darker stroke */
+    stroke-width: 1px; /* Bolder stroke */
+}
+.date-header-tick text {
+    fill: #374151;
+    font-size: 13px; /* Header font size */
+    font-weight: 500;
+}
+ .week-header-tick text {
+    fill: #374151;
+    font-size: 11px;
+    font-weight: 500;
+}
+.date-header-axis .domain { display: none; }
+.view-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #422006;
+    background-color: #facc15; /* Darker Yellow */
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    /* text-align: center; */ /* Centering handled by flex now */
+    margin-bottom: 1.5rem;
+}
+/* Tab styles */
+.tab-button {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    background-color: #f3f4f6;
+    border-bottom: 3px solid transparent;
+    font-weight: 600;
+    color: #4b5563;
+    transition: all 0.3s ease;
+}
+.tab-button.active {
+    color: #1d4ed8;
+    border-bottom: 3px solid #1d4ed8;
+}
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
+/* Table Styles */
+.data-table-container {
+     overflow-x: auto;
+}
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.data-table th, .data-table td {
+    border: 1px solid #e5e7eb;
+    padding: 6px 8px;
+    text-align: left;
+    font-size: 11px;
+}
+.data-table th {
+    background-color: #fef9c3; /* Yellow background for general headers */
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.data-table td {
+    background-color: #fff;
+}
+
+#progress-table th:nth-child(1), #progress-table td:nth-child(1) { width: 3%; text-align: center; }
+#progress-table th:nth-child(2), #progress-table td:nth-child(2) { width: 15%; }
+#progress-table th:nth-child(3), #progress-table td:nth-child(3) { width: 15%; }
+#progress-table th:nth-child(4), #progress-table td:nth-child(4) { width: 17%; }
+
+#kpi-table, #forecast-table, #completion-table {
+    table-layout: fixed;
+}
+#kpi-table th, #kpi-table td, #forecast-table th, #forecast-table td, #completion-table th, #completion-table td {
+    white-space: normal;
+    word-break: break-word;
+    vertical-align: middle;
+}
+
+#kpi-table th:nth-child(1), #kpi-table td:nth-child(1) { width: 3%; text-align: center; }
+#kpi-table th:nth-child(2), #kpi-table td:nth-child(2) { width: 12%; text-align: left; }
+#kpi-table th:nth-child(3), #kpi-table td:nth-child(3) { width: 12%; text-align: left; }
+#kpi-table th:nth-child(4), #kpi-table td:nth-child(4) { width: 10%; text-align: left; }
+#kpi-table th:nth-child(5), #kpi-table td:nth-child(5) { width: 18%; text-align: left; }
+#kpi-table th:nth-child(n+6), #kpi-table td:nth-child(n+6) { width: 7.5%; text-align: center; }
+
+.kpi-delay-cell {
+    text-align: center !important;
+}
+
+#kpi-table th:nth-child(1),
+#kpi-table th:nth-child(2),
+#kpi-table th:nth-child(3),
+#kpi-table th:nth-child(4),
+#kpi-table th:nth-child(5) {
+    background-color: #facc15; /* Darker Yellow */
+}
+
+.data-table .merged-cell {
+    vertical-align: middle;
+    text-align: left;
+    font-weight: 500;
+}
+
+/* Progress status columns */
+#progress-table th:nth-child(n+5) {
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Specific colors for progress status headers */
+#progress-table th:nth-child(5) { background-color: #fecaca; } /* Cancelled */
+#progress-table th:nth-child(6) { background-color: #bbf7d0; } /* Completed */
+#progress-table th:nth-child(7) { background-color: #e5e7eb; } /* N/A */
+#progress-table th:nth-child(8) { background-color: #bfdbfe; } /* Shipped */
+#progress-table th:nth-child(9) { background-color: #fed7aa; } /* Use Local */
+#progress-table th:nth-child(10) { background-color: #e9d5ff; } /* Use Stock */
+#progress-table th:nth-child(11) { background-color: #fef08a; } /* Wait Approve */
+#progress-table th:nth-child(12) { background-color: #99f6e4; } /* Wait PO */
+#progress-table th:nth-child(13) { background-color: #c7d2fe; } /* Wait POS */
+#progress-table th:nth-child(14) { background-color: #fbcfe8; } /* Wait PR */
+#progress-table th:nth-child(15) { background-color: #a5f3fc; } /* Wait QO */
+#progress-table th:nth-child(16) { background-color: #fde68a; } /* WIP */
+
+.tick-mark {
+    text-align: center;
+    font-weight: bold;
+    color: #22c55e;
+}
+
+.milestone-icon, .bar-icon {
+    font-size: 16px;
+    dominant-baseline: middle;
+    text-anchor: middle;
+}
+.delay-text, .percentage-text {
+    font-size: 12px;
+    fill: white;
+    font-weight: bold;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+}
+.app-header {
+    background-color: #1e3a8a; /* Dark Blue */
+    color: white;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+.progress-highlight {
+    color: #dc2626; /* red-600 */
+    font-weight: 600;
+}
+.progress-highlight-green {
+    color: #166534; /* green-800 */
+    font-weight: 600;
+}
+.print-btn {
+    background-color: #1f2937;
+    color: white;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s;
+}
+.print-btn:hover {
+    background-color: #374151;
+}
