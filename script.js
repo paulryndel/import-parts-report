@@ -1324,11 +1324,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const yHeader = svgContainer.append("g").attr("transform", `translate(0, 0)`);
         yHeader.append("rect").attr("x", 0).attr("y", 0).attr("width", margin.left).attr("height", margin.top - 2).attr("fill", "#f3f4f6");
         
-        const yHeaderPositions = { customer: 10, partName: (margin.left * 0.5) };
+        const yHeaderPositions = { 
+            customer: (margin.left * 0.0) + 10,
+            partName: (margin.left * 0.4),
+            prDraft:  (margin.left * 0.7)
+        };
         
         yHeader.append("text").attr("class", "axis-header").attr("x", yHeaderPositions.customer).attr("y", (margin.top - 2) / 2 + 5).text("Customer");
+        
         yHeader.append("line").attr("x1", yHeaderPositions.partName - 5).attr("x2", yHeaderPositions.partName - 5).attr("y1", 0).attr("y2", height).attr("stroke", "#e5e7eb");
         yHeader.append("text").attr("class", "axis-header").attr("x", yHeaderPositions.partName).attr("y", (margin.top - 2) / 2 + 5).text("Part Name");
+
+        yHeader.append("line").attr("x1", yHeaderPositions.prDraft - 5).attr("x2", yHeaderPositions.prDraft - 5).attr("y1", 0).attr("y2", height).attr("stroke", "#e5e7eb");
+        yHeader.append("text").attr("class", "axis-header").attr("x", yHeaderPositions.prDraft).attr("y", (margin.top - 2) / 2 + 5).text("PR Draft");
 
         svgContainer.append("g").selectAll(".y-axis-label-group").data(data).enter().append("foreignObject")
            .attr("x", 0).attr("y", d => yScale(d.partId) + margin.top)
@@ -1337,7 +1345,10 @@ document.addEventListener("DOMContentLoaded", () => {
            .html(d => {
                 const partName = d[excelHeaderMap['Part Name']] || 'N/A';
                 const customer = d[excelHeaderMap['Customer Name']] || 'N/A';
-                return `<div class="customer-name" style="width: 50%; font-weight: normal; border-right: 1px solid #e5e7eb;" title="${customer}">${customer}</div><div class="part-name-detail" style="width: 50%; border-right: none;" title="${partName}">${partName}</div>`;
+                const prDraft = excelHeaderMap['PR Draft'] ? (d[excelHeaderMap['PR Draft']] || 'N/A') : 'N/A';
+                return `<div class="customer-name" style="width: 40%; font-weight: normal; border-right: 1px solid #e5e7eb;" title="${customer}">${customer}</div>` +
+                       `<div class="part-name-detail" style="width: 30%; border-right: 1px solid #e5e7eb;" title="${partName}">${partName}</div>` +
+                       `<div class="pr-draft-detail" style="width: 30%; border-right: none; padding-left: 8px; align-items: center; display: flex;" title="${prDraft}">${prDraft}</div>`;
            });
 
         
@@ -1757,8 +1768,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 const partName = part[excelHeaderMap['Part Name']] || 'N/A';
                 const progress = part[excelHeaderMap['Progress']] || 'N/A';
-                const remarks = excelHeaderMap['Remarks'] ? (part[excelHeaderMap['Remarks']] || '') : '';
+                let remarks = excelHeaderMap['Remarks'] ? (part[excelHeaderMap['Remarks']] || '') : '';
                 const progressClass = highlightProgress.includes(progress.toLowerCase()) ? 'class="progress-highlight"' : '';
+
+                if (progress.toLowerCase() === 'wip') {
+                    const etaDate = part[excelHeaderMap['ETA']];
+                    const prDraft = excelHeaderMap['PR Draft'] ? (part[excelHeaderMap['PR Draft']] || 'N/A') : 'N/A';
+                    let etaString = 'N/A';
+                    if (etaDate instanceof Date && !isNaN(etaDate)) {
+                        const day = ('0' + etaDate.getUTCDate()).slice(-2);
+                        const month = ('0' + (etaDate.getUTCMonth() + 1)).slice(-2);
+                        const year = etaDate.getUTCFullYear().toString().slice(-2);
+                        etaString = `${day}/${month}/${year}`;
+                    }
+                    remarks += ` (ETA:${etaString} PR Draft: ${prDraft})`;
+                }
 
                 tableRowsHTML += `
                     <td>${partName}</td>
