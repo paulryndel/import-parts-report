@@ -1781,7 +1781,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         const year = etaDate.getUTCFullYear().toString().slice(-2);
                         etaString = `${day}/${month}/${year}`;
                     }
-                    remarks += ` (ETA:${etaString} PR Draft: ${prDraft})`;
+                    remarks += ` <span class="progress-highlight">(ETA:${etaString} PR Draft: ${prDraft})</span>`;
                 }
 
                 tableRowsHTML += `
