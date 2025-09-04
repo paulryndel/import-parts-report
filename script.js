@@ -753,7 +753,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (allCustomerParts.length > 0) {
             let completedCount = 0;
-            const completedProgress = ['completed', 'use stock', 'use local', 'n/a', 'cancelled', 'shipped'];
+            const completedProgress = ['completed', 'use stock', 'use local', 'n/a', 'cancelled'];
             allCustomerParts.forEach(part => {
                 const solved = String(part[excelHeaderMap['Solved ?']] || '').trim().toUpperCase();
                 const progress = String(part[excelHeaderMap['Progress']] || '').trim().toLowerCase();
@@ -1005,7 +1005,7 @@ document.addEventListener("DOMContentLoaded", () => {
             groupedByCustomer.get(customer).parts.push(row);
         });
 
-        const completedProgress = ['completed', 'use stock', 'use local', 'n/a', 'cancelled', 'shipped'];
+        const completedProgress = ['completed', 'use stock', 'use local', 'n/a', 'cancelled'];
         let chartData = Array.from(groupedByCustomer.values()).map(customerGroup => {
             const totalParts = customerGroup.parts.length;
             let completedParts = 0;
@@ -1609,7 +1609,7 @@ document.addEventListener("DOMContentLoaded", () => {
             stats.total++;
             const solved = String(row[excelHeaderMap['Solved ?']] || '').trim().toUpperCase();
             const progress = String(row[excelHeaderMap['Progress']] || '').trim().toLowerCase();
-            const completedProgress = ['completed', 'use stock', 'use local', 'n/a', 'cancelled', 'shipped'];
+            const completedProgress = ['completed', 'use stock', 'use local', 'n/a', 'cancelled'];
             if (solved === 'YES' || completedProgress.includes(progress)) {
                 stats.completed++;
             }
@@ -1647,7 +1647,7 @@ document.addEventListener("DOMContentLoaded", () => {
                  stats.total++;
                  const solved = String(row[excelHeaderMap['Solved ?']] || '').trim().toUpperCase();
                  const progress = String(row[excelHeaderMap['Progress']] || '').trim().toLowerCase();
-                 const completedProgress = ['completed', 'use stock', 'use local', 'n/a', 'cancelled', 'shipped'];
+                 const completedProgress = ['completed', 'use stock', 'use local', 'n/a', 'cancelled'];
                  if (solved === 'YES' || completedProgress.includes(progress)) {
                      stats.completed++;
                  }
@@ -1676,7 +1676,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         let itemCounter = 1;
-        const highlightProgress = ['wait approve', 'wait po', 'wait pos', 'wait pr', 'wait qo', 'wip'];
+        const highlightProgress = ['shipped', 'wait po', 'wait pr', 'wait qo', 'wip'];
         
         let sortedCustomers = [...groupedByCustomer.keys()];
         if (sortOrder === 'customer') {
@@ -1769,9 +1769,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 const partName = part[excelHeaderMap['Part Name']] || 'N/A';
                 const progress = part[excelHeaderMap['Progress']] || 'N/A';
                 let remarks = excelHeaderMap['Remarks'] ? (part[excelHeaderMap['Remarks']] || '') : '';
-                const progressClass = highlightProgress.includes(progress.toLowerCase()) ? 'class="progress-highlight"' : '';
+                const progressLower = progress.toLowerCase();
+                const progressClass = highlightProgress.includes(progressLower) ? 'class="progress-highlight"' : '';
 
-                if (progress.toLowerCase() === 'wip') {
+                if (progressLower === 'wip' || progressLower === 'shipped') {
                     const etaDate = part[excelHeaderMap['ETA']];
                     const prDraft = excelHeaderMap['PR Draft'] ? (part[excelHeaderMap['PR Draft']] || 'N/A') : 'N/A';
                     let etaString = 'N/A';
